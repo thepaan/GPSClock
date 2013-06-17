@@ -14,14 +14,18 @@
 // Pick one up today at the Adafruit electronics shop 
 // and help support open source hardware & software! -ada
 
-#include "Adafruit_LEDBackpack.h"
-#include <Wire.h>
+#include <Adafruit_LEDBackpack.h>;
 #include <Adafruit_GPS.h>;
+#include <Adafruit_GFX.h>
 #include <SoftwareSerial.h>;
+#include <Wire.h>;
 Adafruit_GPS GPS(&Serial1);
 
 int fourdigitTime;
-Adafruit_7segment matrix = Adafruit_7segment();
+int zuluTime;
+Adafruit_7segment
+  matrixA = Adafruit_7segment(),
+  matrixB = Adafruit_7segment();
 
 // Set GPSECHO to 'false' to turn off echoing the GPS data to the Serial console
 // Set to 'true' if you want to debug and listen to the raw GPS sentences
@@ -33,7 +37,8 @@ boolean usingInterrupt = false;
 
 void setup()  
 {
-  matrix.begin(0x70); 
+  matrixA.begin(0x70);
+  matrixB.begin(0x71);
   // connect at 115200 so we can read the GPS fast enough and echo without dropping chars
   // also spit it out
   Serial.begin(115200);
@@ -80,17 +85,43 @@ void loop()                     // run over and over again
     if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
       return;  // we can fail to parse a sentence in which case we should just wait for another
   }
-   if (GPS.hour <= 8) {
-       fourdigitTime = ((GPS.hour + 4) *100)+ GPS.minute;
- } else if ((GPS.hour > 8) && (GPS.hour <= 20)) {
-       fourdigitTime = ((GPS.hour - 8) *100)+ GPS.minute;   
- } else if (GPS.hour > 20) {
-        fourdigitTime = ((GPS.hour - 20) *100)+ GPS.minute;   
- }
-    matrix.print(fourdigitTime);
-    matrix.drawColon(true);
-    matrix.writeDisplay();
-    Serial.print("fourdigitTime: "); Serial.println(fourdigitTime); 
+
+// first clock adjusted for UTC+9 (Tokyo, Seoul), 24-hour clock, no daylight savings
+if (GPS.hour < 15) {
+  fourdigitTime = ((GPS.hour + 9) *100)+ GPS.minute;
+} else {
+  fourdigitTime = ((GPS.hour - 15) *100)+ GPS.minute;   
+}
+
+matrixA.print(fourdigitTime);
+matrixA.setBrightness(7); // default 15 is too bright
+// matrixA.drawColon(true); // works only for 0.56" display
+matrixA.writeDigitRaw(2, 0x02); // display only center colon on 1.2" display
+// Serial.print("fourdigitTime: "); Serial.println(fourdigitTime); // too much serial output
+if (GPS.hour == 15 && GPS.minute < 10) { // display leading zeros
+  matrixA.writeDigitNum(1, 0);
+  matrixA.writeDigitNum(3, 0);
+} else if (GPS.hour == 15 && GPS.minute >= 10) {
+  matrixA.writeDigitNum(1, 0);
+} else {
+  matrixA.writeDisplay();
+}
+
+// second clock adjusted for UTC (Zulu), 24-hour clock, no daylight savings
+zuluTime = (GPS.hour *100)+ GPS.minute;
+
+matrixB.print(zuluTime);
+matrixB.setBrightness(7);
+matrixB.writeDigitRaw(2, 0x02);
+if (GPS.hour < 1 && GPS.minute < 10) {
+  matrixB.writeDigitNum(1, 0);
+  matrixB.writeDigitNum(3, 0);
+} else if (GPS.hour < 1 && GPS.minute >= 10) {
+  matrixB.writeDigitNum(1, 0);
+} else {
+  matrixB.writeDisplay();
+}
+
   // if millis() or timer wraps around, we'll just reset it
   if (timer > millis())  timer = millis();
 
