@@ -98,14 +98,17 @@ matrixA.setBrightness(7); // default 15 is too bright
 // matrixA.drawColon(true); // works only for 0.56" display
 matrixA.writeDigitRaw(2, 0x02); // display only center colon on 1.2" display
 // Serial.print("fourdigitTime: "); Serial.println(fourdigitTime); // too much serial output
-if (GPS.hour == 15 && GPS.minute < 10) { // display leading zeros
+if (GPS.hour == 15 && GPS.minute < 1) { // display leading zeros
+  matrixB.writeDigitNum(1, 0);
+  matrixB.writeDigitNum(3, 0);
+  matrixB.writeDigitNum(4, 0);
+} else if (GPS.hour == 15 && GPS.minute < 10) {
   matrixA.writeDigitNum(1, 0);
   matrixA.writeDigitNum(3, 0);
 } else if (GPS.hour == 15 && GPS.minute >= 10) {
   matrixA.writeDigitNum(1, 0);
-} else {
-  matrixA.writeDisplay();
 }
+matrixA.writeDisplay();
 
 // second clock adjusted for UTC (Zulu), 24-hour clock, no daylight savings
 zuluTime = (GPS.hour *100)+ GPS.minute;
@@ -113,14 +116,17 @@ zuluTime = (GPS.hour *100)+ GPS.minute;
 matrixB.print(zuluTime);
 matrixB.setBrightness(7);
 matrixB.writeDigitRaw(2, 0x02);
-if (GPS.hour < 1 && GPS.minute < 10) {
+if (GPS.hour < 1 && GPS.minute < 1) {
+  matrixB.writeDigitNum(1, 0);
+  matrixB.writeDigitNum(3, 0);
+  matrixB.writeDigitNum(4, 0);
+} else if (GPS.hour < 1 && GPS.minute < 10) {
   matrixB.writeDigitNum(1, 0);
   matrixB.writeDigitNum(3, 0);
 } else if (GPS.hour < 1 && GPS.minute >= 10) {
   matrixB.writeDigitNum(1, 0);
-} else {
-  matrixB.writeDisplay();
 }
+matrixB.writeDisplay();
 
   // if millis() or timer wraps around, we'll just reset it
   if (timer > millis())  timer = millis();
