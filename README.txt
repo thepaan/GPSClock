@@ -1,8 +1,11 @@
+For the Micro sketch:
+
 - Added the include for the Adafruit GFX library
 - Added code for a second backpack
 - Added code to correctly light the colon on the 1.2" display
 
 - Disabled the chatty serial data that the Arduino was relaying from the GPS module
+
 
 
 
